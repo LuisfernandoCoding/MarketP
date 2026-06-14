@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export interface AuthUser {
   id: number;
@@ -6,18 +6,25 @@ export interface AuthUser {
   email: string;
 }
 
-export function useAuth() {
-  const [token, setToken] = useState<string | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
+function readStoredToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("token");
+}
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-    if (storedToken) setToken(storedToken);
-    if (storedUser) {
-      try { setUser(JSON.parse(storedUser)); } catch { /* ignore */ }
-    }
-  }, []);
+function readStoredUser(): AuthUser | null {
+  if (typeof window === "undefined") return null;
+  const storedUser = localStorage.getItem("user");
+  if (!storedUser) return null;
+  try {
+    return JSON.parse(storedUser) as AuthUser;
+  } catch {
+    return null;
+  }
+}
+
+export function useAuth() {
+  const [token, setToken] = useState<string | null>(readStoredToken);
+  const [user, setUser] = useState<AuthUser | null>(readStoredUser);
 
   const login = (newToken: string, newUser?: AuthUser) => {
     localStorage.setItem("token", newToken);
